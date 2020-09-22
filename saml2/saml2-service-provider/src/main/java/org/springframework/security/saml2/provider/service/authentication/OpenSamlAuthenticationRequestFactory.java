@@ -107,7 +107,7 @@ public class OpenSamlAuthenticationRequestFactory implements Saml2Authentication
 			if (credential.isSigningCredential()) {
 				Credential cred = getSigningCredential(credential.getCertificate(), credential.getPrivateKey(),
 						request.getIssuer());
-				return serialize(sign(authnRequest, cred));
+				return serialize(sign(SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA256, authnRequest, cred));
 			}
 		}
 		throw new IllegalArgumentException("No signing credential provided");
@@ -117,7 +117,8 @@ public class OpenSamlAuthenticationRequestFactory implements Saml2Authentication
 	public Saml2PostAuthenticationRequest createPostAuthenticationRequest(Saml2AuthenticationRequestContext context) {
 		AuthnRequest authnRequest = this.authenticationRequestContextConverter.convert(context);
 		String xml = context.getRelyingPartyRegistration().getAssertingPartyDetails().getWantAuthnRequestsSigned()
-				? serialize(sign(authnRequest, context.getRelyingPartyRegistration())) : serialize(authnRequest);
+				? serialize(sign(context.getSignAlgorithmUri(), authnRequest, context.getRelyingPartyRegistration()))
+				: serialize(authnRequest);
 
 		return Saml2PostAuthenticationRequest.withAuthenticationRequestContext(context)
 				.samlRequest(Saml2Utils.samlEncode(xml.getBytes(StandardCharsets.UTF_8))).build();
@@ -137,7 +138,7 @@ public class OpenSamlAuthenticationRequestFactory implements Saml2Authentication
 			for (Saml2X509Credential credential : signingCredentials) {
 				Credential cred = getSigningCredential(credential.getCertificate(), credential.getPrivateKey(), "");
 				Map<String, String> signedParams = signQueryParameters(cred, deflatedAndEncoded,
-						context.getRelayState());
+						context.getRelayState(), context.getSignAlgorithmUri());
 				return result.samlRequest(signedParams.get("SAMLRequest")).relayState(signedParams.get("RelayState"))
 						.sigAlg(signedParams.get("SigAlg")).signature(signedParams.get("Signature")).build();
 			}
@@ -210,19 +211,20 @@ public class OpenSamlAuthenticationRequestFactory implements Saml2Authentication
 		this.protocolBindingResolver = (context) -> protocolBinding;
 	}
 
-	private AuthnRequest sign(AuthnRequest authnRequest, RelyingPartyRegistration relyingPartyRegistration) {
+	private AuthnRequest sign(String signAlgorithmUri, AuthnRequest authnRequest,
+			RelyingPartyRegistration relyingPartyRegistration) {
 		for (Saml2X509Credential credential : relyingPartyRegistration.getSigningX509Credentials()) {
 			Credential cred = getSigningCredential(credential.getCertificate(), credential.getPrivateKey(),
 					relyingPartyRegistration.getEntityId());
-			return sign(authnRequest, cred);
+			return sign(signAlgorithmUri, authnRequest, cred);
 		}
 		throw new IllegalArgumentException("No signing credential provided");
 	}
 
-	private AuthnRequest sign(AuthnRequest authnRequest, Credential credential) {
+	private AuthnRequest sign(String signAlgorithmUri, AuthnRequest authnRequest, Credential credential) {
 		SignatureSigningParameters parameters = new SignatureSigningParameters();
 		parameters.setSigningCredential(credential);
-		parameters.setSignatureAlgorithm(SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA256);
+		parameters.setSignatureAlgorithm(signAlgorithmUri);
 		parameters.setSignatureReferenceDigestMethod(SignatureConstants.ALGO_ID_DIGEST_SHA256);
 		parameters.setSignatureCanonicalizationAlgorithm(SignatureConstants.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
 		try {
@@ -241,9 +243,9 @@ public class OpenSamlAuthenticationRequestFactory implements Saml2Authentication
 		return cred;
 	}
 
-	private Map<String, String> signQueryParameters(Credential credential, String samlRequest, String relayState) {
+	private Map<String, String> signQueryParameters(Credential credential, String samlRequest, String relayState,
+			String algorithmUri) {
 		Assert.notNull(samlRequest, "samlRequest cannot be null");
-		String algorithmUri = SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA256;
 		StringBuilder queryString = new StringBuilder();
 		queryString.append("SAMLRequest").append("=").append(UriUtils.encode(samlRequest, StandardCharsets.ISO_8859_1))
 				.append("&");

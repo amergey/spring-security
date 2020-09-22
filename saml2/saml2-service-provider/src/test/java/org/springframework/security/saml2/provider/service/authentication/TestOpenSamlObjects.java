@@ -239,11 +239,12 @@ public final class TestOpenSamlObjects {
 	}
 
 	static <T extends SignableSAMLObject> T signed(T signable,
-			org.springframework.security.saml2.credentials.Saml2X509Credential credential, String entityId) {
+			org.springframework.security.saml2.credentials.Saml2X509Credential credential, String entityId,
+			String signAlgorithmUri) {
 		SignatureSigningParameters parameters = new SignatureSigningParameters();
 		Credential signingCredential = getSigningCredential(credential, entityId);
 		parameters.setSigningCredential(signingCredential);
-		parameters.setSignatureAlgorithm(SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA256);
+		parameters.setSignatureAlgorithm(signAlgorithmUri);
 		parameters.setSignatureReferenceDigestMethod(SignatureConstants.ALGO_ID_DIGEST_SHA256);
 		parameters.setSignatureCanonicalizationAlgorithm(SignatureConstants.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
 		try {

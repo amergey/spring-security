@@ -16,6 +16,8 @@
 
 package org.springframework.security.saml2.provider.service.authentication;
 
+import org.opensaml.xmlsec.signature.support.SignatureConstants;
+
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistration;
 import org.springframework.util.Assert;
 
@@ -39,15 +41,19 @@ public class Saml2AuthenticationRequestContext {
 
 	private final String relayState;
 
+	private final String signAlgorithmUri;
+
 	protected Saml2AuthenticationRequestContext(RelyingPartyRegistration relyingPartyRegistration, String issuer,
-			String assertionConsumerServiceUrl, String relayState) {
+			String assertionConsumerServiceUrl, String relayState, String signAlgorithmUri) {
 		Assert.hasText(issuer, "issuer cannot be null or empty");
 		Assert.notNull(relyingPartyRegistration, "relyingPartyRegistration cannot be null");
 		Assert.hasText(assertionConsumerServiceUrl, "spAssertionConsumerServiceUrl cannot be null or empty");
+		Assert.notNull(signAlgorithmUri, "signAlgorithmUri cannot be null");
 		this.issuer = issuer;
 		this.relyingPartyRegistration = relyingPartyRegistration;
 		this.assertionConsumerServiceUrl = assertionConsumerServiceUrl;
 		this.relayState = relayState;
+		this.signAlgorithmUri = signAlgorithmUri;
 	}
 
 	/**
@@ -98,6 +104,15 @@ public class Saml2AuthenticationRequestContext {
 	}
 
 	/**
+	 * Return the algorithm URI used to sign XML document
+	 * @return the sign algorithm URI
+	 * @since 5.5
+	 */
+	public String getSignAlgorithmUri() {
+		return this.signAlgorithmUri;
+	}
+
+	/**
 	 * A builder for {@link Saml2AuthenticationRequestContext}.
 	 * @return a builder object
 	 */
@@ -117,6 +132,8 @@ public class Saml2AuthenticationRequestContext {
 		private String relayState;
 
 		private RelyingPartyRegistration relyingPartyRegistration;
+
+		private String signAlgorithmUri = SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA256;
 
 		private Builder() {
 		}
@@ -165,13 +182,24 @@ public class Saml2AuthenticationRequestContext {
 		}
 
 		/**
+		 * Sets the algorithm URI used to sign XML document
+		 * @param signAlgorithmUri sign algorithm URI
+		 * @return this {@code Builder}
+		 * @since 5.5
+		 */
+		public Builder signAlgorithmUri(String signAlgorithmUri) {
+			this.signAlgorithmUri = signAlgorithmUri;
+			return this;
+		}
+
+		/**
 		 * Creates a {@link Saml2AuthenticationRequestContext} object.
 		 * @return the Saml2AuthenticationRequest object
 		 * @throws IllegalArgumentException if a required property is not set
 		 */
 		public Saml2AuthenticationRequestContext build() {
 			return new Saml2AuthenticationRequestContext(this.relyingPartyRegistration, this.issuer,
-					this.assertionConsumerServiceUrl, this.relayState);
+					this.assertionConsumerServiceUrl, this.relayState, this.signAlgorithmUri);
 		}
 
 	}

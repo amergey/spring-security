@@ -28,6 +28,7 @@ import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.saml2.core.AuthnRequest;
 import org.opensaml.saml.saml2.core.impl.AuthnRequestUnmarshaller;
+import org.opensaml.xmlsec.signature.support.SignatureConstants;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -207,6 +208,18 @@ public class OpenSamlAuthenticationRequestFactoryTests {
 		String samlRequest = request.getSamlRequest();
 		String inflated = new String(Saml2Utils.samlDecode(samlRequest));
 		assertThat(inflated).contains("ProtocolBinding=\"" + SAMLConstants.SAML2_REDIRECT_BINDING_URI + "\"");
+	}
+
+	@Test
+	public void createRedirectAuthenticationRequestWhenSHA1SignRequestThenSignatureIsPresent() {
+		this.context = this.contextBuilder.relayState("Relay State Value")
+				.signAlgorithmUri(SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA1).build();
+		Saml2RedirectAuthenticationRequest result = this.factory.createRedirectAuthenticationRequest(this.context);
+		assertThat(result.getSamlRequest()).isNotEmpty();
+		assertThat(result.getRelayState()).isEqualTo("Relay State Value");
+		assertThat(result.getSigAlg()).isEqualTo(SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA1);
+		assertThat(result.getSignature()).isNotNull();
+		assertThat(result.getBinding()).isEqualTo(Saml2MessageBinding.REDIRECT);
 	}
 
 	private AuthnRequest getAuthNRequest(Saml2MessageBinding binding) {
