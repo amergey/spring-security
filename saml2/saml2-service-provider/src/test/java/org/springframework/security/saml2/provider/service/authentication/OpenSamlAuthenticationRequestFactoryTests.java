@@ -36,6 +36,7 @@ import org.springframework.security.saml2.core.Saml2X509Credential;
 import org.springframework.security.saml2.credentials.TestSaml2X509Credentials;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistration;
 import org.springframework.security.saml2.provider.service.registration.Saml2MessageBinding;
+import org.springframework.security.saml2.provider.service.registration.Saml2NameIDPolicy;
 import org.springframework.security.saml2.provider.service.registration.TestRelyingPartyRegistrations;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -188,6 +189,21 @@ public class OpenSamlAuthenticationRequestFactoryTests {
 		this.factory.setProtocolBinding(SAMLConstants.SAML2_REDIRECT_BINDING_URI);
 		AuthnRequest authn = getAuthNRequest(Saml2MessageBinding.POST);
 		Assert.assertEquals(SAMLConstants.SAML2_REDIRECT_BINDING_URI, authn.getProtocolBinding());
+	}
+
+	@Test
+	public void createAuthenticationRequestWhenSetNameIDPolicyThenReturnsCorrectNameIDPolicy() {
+		RelyingPartyRegistration registration = TestRelyingPartyRegistrations.full()
+				.nameIDPolicy(
+						Saml2NameIDPolicy.builder().allowCreate(true).format("format").sPNameQualifier("spnq").build())
+				.build();
+		this.context = this.contextBuilder.relayState("Relay State Value").relyingPartyRegistration(registration)
+				.build();
+		AuthnRequest authn = getAuthNRequest(Saml2MessageBinding.POST);
+		assertThat(authn.getNameIDPolicy()).isNotNull();
+		assertThat(authn.getNameIDPolicy().getAllowCreate()).isTrue();
+		assertThat(authn.getNameIDPolicy().getFormat()).isEqualTo("format");
+		assertThat(authn.getNameIDPolicy().getSPNameQualifier()).isEqualTo("spnq");
 	}
 
 	@Test

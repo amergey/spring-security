@@ -34,9 +34,11 @@ import org.joda.time.DateTime;
 import org.opensaml.core.config.ConfigurationService;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistry;
 import org.opensaml.core.xml.io.MarshallingException;
+import org.opensaml.saml.common.SAMLObjectBuilder;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.saml2.core.AuthnRequest;
 import org.opensaml.saml.saml2.core.Issuer;
+import org.opensaml.saml.saml2.core.NameIDPolicy;
 import org.opensaml.saml.saml2.core.impl.AuthnRequestBuilder;
 import org.opensaml.saml.saml2.core.impl.AuthnRequestMarshaller;
 import org.opensaml.saml.saml2.core.impl.IssuerBuilder;
@@ -62,6 +64,7 @@ import org.springframework.security.saml2.core.Saml2X509Credential;
 import org.springframework.security.saml2.provider.service.authentication.Saml2RedirectAuthenticationRequest.Builder;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistration;
 import org.springframework.security.saml2.provider.service.registration.Saml2MessageBinding;
+import org.springframework.security.saml2.provider.service.registration.Saml2NameIDPolicy;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -84,6 +87,8 @@ public class OpenSamlAuthenticationRequestFactory implements Saml2Authentication
 
 	private IssuerBuilder issuerBuilder;
 
+	private SAMLObjectBuilder<NameIDPolicy> nameIDBuilder;
+
 	private Converter<Saml2AuthenticationRequestContext, String> protocolBindingResolver = (context) -> {
 		if (context == null) {
 			return SAMLConstants.SAML2_POST_BINDING_URI;
@@ -103,13 +108,15 @@ public class OpenSamlAuthenticationRequestFactory implements Saml2Authentication
 		this.authnRequestBuilder = (AuthnRequestBuilder) registry.getBuilderFactory()
 				.getBuilder(AuthnRequest.DEFAULT_ELEMENT_NAME);
 		this.issuerBuilder = (IssuerBuilder) registry.getBuilderFactory().getBuilder(Issuer.DEFAULT_ELEMENT_NAME);
+		this.nameIDBuilder = (SAMLObjectBuilder<NameIDPolicy>) registry.getBuilderFactory()
+				.getBuilder(NameIDPolicy.DEFAULT_ELEMENT_NAME);
 	}
 
 	@Override
 	@Deprecated
 	public String createAuthenticationRequest(Saml2AuthenticationRequest request) {
 		AuthnRequest authnRequest = createAuthnRequest(request.getIssuer(), request.getDestination(),
-				request.getAssertionConsumerServiceUrl(), this.protocolBindingResolver.convert(null));
+				request.getAssertionConsumerServiceUrl(), this.protocolBindingResolver.convert(null), null);
 		for (org.springframework.security.saml2.credentials.Saml2X509Credential credential : request.getCredentials()) {
 			if (credential.isSigningCredential()) {
 				X509Certificate certificate = credential.getCertificate();
@@ -160,11 +167,12 @@ public class OpenSamlAuthenticationRequestFactory implements Saml2Authentication
 
 	private AuthnRequest createAuthnRequest(Saml2AuthenticationRequestContext context) {
 		return createAuthnRequest(context.getIssuer(), context.getDestination(),
-				context.getAssertionConsumerServiceUrl(), this.protocolBindingResolver.convert(context));
+				context.getAssertionConsumerServiceUrl(), this.protocolBindingResolver.convert(context),
+				context.getRelyingPartyRegistration().getNameIDPolicy());
 	}
 
 	private AuthnRequest createAuthnRequest(String issuer, String destination, String assertionConsumerServiceUrl,
-			String protocolBinding) {
+			String protocolBinding, Saml2NameIDPolicy nameIDPolicy) {
 		AuthnRequest auth = this.authnRequestBuilder.buildObject();
 		auth.setID("ARQ" + UUID.randomUUID().toString().substring(1));
 		auth.setIssueInstant(new DateTime(this.clock.millis()));
@@ -176,6 +184,14 @@ public class OpenSamlAuthenticationRequestFactory implements Saml2Authentication
 		auth.setIssuer(iss);
 		auth.setDestination(destination);
 		auth.setAssertionConsumerServiceURL(assertionConsumerServiceUrl);
+
+		if (nameIDPolicy != null) {
+			NameIDPolicy nameId = this.nameIDBuilder.buildObject();
+			nameId.setAllowCreate(nameIDPolicy.isAllowCreate());
+			nameId.setFormat(nameIDPolicy.getFormat());
+			nameId.setSPNameQualifier(nameIDPolicy.getSPNameQualifier());
+			auth.setNameIDPolicy(nameId);
+		}
 		return auth;
 	}
 

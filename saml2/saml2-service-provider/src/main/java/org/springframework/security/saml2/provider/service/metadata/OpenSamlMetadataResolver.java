@@ -31,6 +31,7 @@ import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.saml2.metadata.AssertionConsumerService;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml.saml2.metadata.KeyDescriptor;
+import org.opensaml.saml.saml2.metadata.NameIDFormat;
 import org.opensaml.saml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.saml.saml2.metadata.impl.EntityDescriptorMarshaller;
 import org.opensaml.security.credential.UsageType;
@@ -85,6 +86,9 @@ public final class OpenSamlMetadataResolver implements Saml2MetadataResolver {
 		spSsoDescriptor.getKeyDescriptors()
 				.addAll(buildKeys(registration.getDecryptionX509Credentials(), UsageType.ENCRYPTION));
 		spSsoDescriptor.getAssertionConsumerServices().add(buildAssertionConsumerService(registration));
+		if (registration.getNameIDPolicy() != null) {
+			spSsoDescriptor.getNameIDFormats().add(buildNameIDFormat(registration));
+		}
 		return spSsoDescriptor;
 	}
 
@@ -121,6 +125,12 @@ public final class OpenSamlMetadataResolver implements Saml2MetadataResolver {
 		assertionConsumerService.setBinding(registration.getAssertionConsumerServiceBinding().getUrn());
 		assertionConsumerService.setIndex(1);
 		return assertionConsumerService;
+	}
+
+	private NameIDFormat buildNameIDFormat(RelyingPartyRegistration registration) {
+		NameIDFormat nameIDFormat = build(NameIDFormat.DEFAULT_ELEMENT_NAME);
+		nameIDFormat.setFormat(registration.getNameIDPolicy().getFormat());
+		return nameIDFormat;
 	}
 
 	@SuppressWarnings("unchecked")
