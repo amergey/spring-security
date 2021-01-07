@@ -86,7 +86,7 @@ public final class OpenSamlMetadataResolver implements Saml2MetadataResolver {
 		spSsoDescriptor.getKeyDescriptors()
 				.addAll(buildKeys(registration.getDecryptionX509Credentials(), UsageType.ENCRYPTION));
 		spSsoDescriptor.getAssertionConsumerServices().add(buildAssertionConsumerService(registration));
-		if (registration.getNameIDPolicy() != null) {
+		if (registration.getNameIDFormat() != null) {
 			spSsoDescriptor.getNameIDFormats().add(buildNameIDFormat(registration));
 		}
 		return spSsoDescriptor;
@@ -129,7 +129,7 @@ public final class OpenSamlMetadataResolver implements Saml2MetadataResolver {
 
 	private NameIDFormat buildNameIDFormat(RelyingPartyRegistration registration) {
 		NameIDFormat nameIDFormat = build(NameIDFormat.DEFAULT_ELEMENT_NAME);
-		nameIDFormat.setFormat(registration.getNameIDPolicy().getFormat());
+		nameIDFormat.setFormat(registration.getNameIDFormat());
 		return nameIDFormat;
 	}
 

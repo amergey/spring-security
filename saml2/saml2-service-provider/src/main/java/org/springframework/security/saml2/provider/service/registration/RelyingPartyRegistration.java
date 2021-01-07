@@ -81,7 +81,7 @@ public final class RelyingPartyRegistration {
 
 	private final Saml2MessageBinding assertionConsumerServiceBinding;
 
-	private final Saml2NameIDPolicy nameIDPolicy;
+	private final String nameIDFormat;
 
 	private final ProviderDetails providerDetails;
 
@@ -92,8 +92,7 @@ public final class RelyingPartyRegistration {
 	private final Collection<Saml2X509Credential> signingX509Credentials;
 
 	private RelyingPartyRegistration(String registrationId, String entityId, String assertionConsumerServiceLocation,
-			Saml2MessageBinding assertionConsumerServiceBinding, Saml2NameIDPolicy nameIDPolicy,
-			ProviderDetails providerDetails,
+			Saml2MessageBinding assertionConsumerServiceBinding, String nameIDFormat, ProviderDetails providerDetails,
 			Collection<org.springframework.security.saml2.credentials.Saml2X509Credential> credentials,
 			Collection<Saml2X509Credential> decryptionX509Credentials,
 			Collection<Saml2X509Credential> signingX509Credentials) {
@@ -121,7 +120,7 @@ public final class RelyingPartyRegistration {
 		this.entityId = entityId;
 		this.assertionConsumerServiceLocation = assertionConsumerServiceLocation;
 		this.assertionConsumerServiceBinding = assertionConsumerServiceBinding;
-		this.nameIDPolicy = nameIDPolicy;
+		this.nameIDFormat = nameIDFormat;
 		this.providerDetails = providerDetails;
 		this.credentials = Collections.unmodifiableList(new LinkedList<>(credentials));
 		this.decryptionX509Credentials = Collections.unmodifiableList(new LinkedList<>(decryptionX509Credentials));
@@ -182,12 +181,12 @@ public final class RelyingPartyRegistration {
 	}
 
 	/**
-	 * Get the NameIDPolicy.
-	 * @return the NameIDPolicy
+	 * Get the NameID format.
+	 * @return the NameID format
 	 * @since 5.5
 	 */
-	public Saml2NameIDPolicy getNameIDPolicy() {
-		return this.nameIDPolicy;
+	public String getNameIDFormat() {
+		return this.nameIDFormat;
 	}
 
 	/**
@@ -377,7 +376,7 @@ public final class RelyingPartyRegistration {
 				.decryptionX509Credentials((c) -> c.addAll(registration.getDecryptionX509Credentials()))
 				.assertionConsumerServiceLocation(registration.getAssertionConsumerServiceLocation())
 				.assertionConsumerServiceBinding(registration.getAssertionConsumerServiceBinding())
-				.nameIDPolicy(registration.getNameIDPolicy())
+				.nameIDFormat(registration.getNameIDFormat())
 				.assertingPartyDetails((assertingParty) -> assertingParty
 						.entityId(registration.getAssertingPartyDetails().getEntityId())
 						.wantAuthnRequestsSigned(registration.getAssertingPartyDetails().getWantAuthnRequestsSigned())
@@ -844,7 +843,7 @@ public final class RelyingPartyRegistration {
 
 		private Saml2MessageBinding assertionConsumerServiceBinding = Saml2MessageBinding.POST;
 
-		private Saml2NameIDPolicy nameIDPolicy = null;
+		private String nameIDFormat = null;
 
 		private ProviderDetails.Builder providerDetails = new ProviderDetails.Builder();
 
@@ -949,13 +948,13 @@ public final class RelyingPartyRegistration {
 		}
 
 		/**
-		 * Set the NameIDPolicy
-		 * @param nameIDPolicy
+		 * Set the NameID format
+		 * @param nameIDFormat
 		 * @return the {@link Builder} for further configuration
 		 * @since 5.5
 		 */
-		public Builder nameIDPolicy(Saml2NameIDPolicy nameIDPolicy) {
-			this.nameIDPolicy = nameIDPolicy;
+		public Builder nameIDFormat(String nameIDFormat) {
+			this.nameIDFormat = nameIDFormat;
 			return this;
 		}
 
@@ -1101,7 +1100,7 @@ public final class RelyingPartyRegistration {
 				this.credentials.add(toDeprecated(credential));
 			}
 			return new RelyingPartyRegistration(this.registrationId, this.entityId,
-					this.assertionConsumerServiceLocation, this.assertionConsumerServiceBinding, this.nameIDPolicy,
+					this.assertionConsumerServiceLocation, this.assertionConsumerServiceBinding, this.nameIDFormat,
 					this.providerDetails.build(), this.credentials, this.decryptionX509Credentials,
 					this.signingX509Credentials);
 		}

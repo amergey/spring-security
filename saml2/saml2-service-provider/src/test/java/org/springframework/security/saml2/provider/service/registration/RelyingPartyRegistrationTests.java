@@ -28,8 +28,7 @@ public class RelyingPartyRegistrationTests {
 	@Test
 	public void withRelyingPartyRegistrationWorks() {
 		RelyingPartyRegistration registration = TestRelyingPartyRegistrations.relyingPartyRegistration()
-				.nameIDPolicy(
-						Saml2NameIDPolicy.builder().allowCreate(true).format("format").sPNameQualifier("spnq").build())
+				.nameIDFormat("format")
 				.assertingPartyDetails((a) -> a.singleSignOnServiceBinding(Saml2MessageBinding.POST))
 				.assertingPartyDetails((a) -> a.wantAuthnRequestsSigned(false))
 				.assertingPartyDetails((a) -> a.signingAlgorithms((algs) -> algs.add("alg")))
@@ -76,7 +75,7 @@ public class RelyingPartyRegistrationTests {
 				.isEqualTo(registration.getAssertingPartyDetails().getVerificationX509Credentials());
 		assertThat(copy.getAssertingPartyDetails().getSigningAlgorithms())
 				.isEqualTo(registration.getAssertingPartyDetails().getSigningAlgorithms());
-		assertThat(copy.getNameIDPolicy()).isEqualTo(registration.getNameIDPolicy());
+		assertThat(copy.getNameIDFormat()).isEqualTo(registration.getNameIDFormat());
 	}
 
 	@Test

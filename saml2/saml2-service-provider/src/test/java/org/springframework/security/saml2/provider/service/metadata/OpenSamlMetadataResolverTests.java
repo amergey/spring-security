@@ -21,7 +21,6 @@ import org.junit.Test;
 import org.springframework.security.saml2.core.TestSaml2X509Credentials;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistration;
 import org.springframework.security.saml2.provider.service.registration.Saml2MessageBinding;
-import org.springframework.security.saml2.provider.service.registration.Saml2NameIDPolicy;
 import org.springframework.security.saml2.provider.service.registration.TestRelyingPartyRegistrations;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -62,8 +61,8 @@ public class OpenSamlMetadataResolverTests {
 
 	@Test
 	public void resolveWhenRelyingPartyNameIDFormatThenMetadataMatches() {
-		RelyingPartyRegistration relyingPartyRegistration = TestRelyingPartyRegistrations.full()
-				.nameIDPolicy(Saml2NameIDPolicy.builder().format("format").build()).build();
+		RelyingPartyRegistration relyingPartyRegistration = TestRelyingPartyRegistrations.full().nameIDFormat("format")
+				.build();
 		OpenSamlMetadataResolver openSamlMetadataResolver = new OpenSamlMetadataResolver();
 		String metadata = openSamlMetadataResolver.resolve(relyingPartyRegistration);
 		assertThat(metadata).contains("<md:NameIDFormat>format</md:NameIDFormat>");

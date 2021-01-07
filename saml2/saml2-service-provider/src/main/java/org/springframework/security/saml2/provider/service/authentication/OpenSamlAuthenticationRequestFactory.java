@@ -64,7 +64,6 @@ import org.springframework.security.saml2.core.Saml2X509Credential;
 import org.springframework.security.saml2.provider.service.authentication.Saml2RedirectAuthenticationRequest.Builder;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistration;
 import org.springframework.security.saml2.provider.service.registration.Saml2MessageBinding;
-import org.springframework.security.saml2.provider.service.registration.Saml2NameIDPolicy;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -168,11 +167,11 @@ public class OpenSamlAuthenticationRequestFactory implements Saml2Authentication
 	private AuthnRequest createAuthnRequest(Saml2AuthenticationRequestContext context) {
 		return createAuthnRequest(context.getIssuer(), context.getDestination(),
 				context.getAssertionConsumerServiceUrl(), this.protocolBindingResolver.convert(context),
-				context.getRelyingPartyRegistration().getNameIDPolicy());
+				context.getRelyingPartyRegistration().getNameIDFormat());
 	}
 
 	private AuthnRequest createAuthnRequest(String issuer, String destination, String assertionConsumerServiceUrl,
-			String protocolBinding, Saml2NameIDPolicy nameIDPolicy) {
+			String protocolBinding, String nameIDFormat) {
 		AuthnRequest auth = this.authnRequestBuilder.buildObject();
 		auth.setID("ARQ" + UUID.randomUUID().toString().substring(1));
 		auth.setIssueInstant(new DateTime(this.clock.millis()));
@@ -185,11 +184,9 @@ public class OpenSamlAuthenticationRequestFactory implements Saml2Authentication
 		auth.setDestination(destination);
 		auth.setAssertionConsumerServiceURL(assertionConsumerServiceUrl);
 
-		if (nameIDPolicy != null) {
+		if (nameIDFormat != null) {
 			NameIDPolicy nameId = this.nameIDBuilder.buildObject();
-			nameId.setAllowCreate(nameIDPolicy.isAllowCreate());
-			nameId.setFormat(nameIDPolicy.getFormat());
-			nameId.setSPNameQualifier(nameIDPolicy.getSPNameQualifier());
+			nameId.setFormat(nameIDFormat);
 			auth.setNameIDPolicy(nameId);
 		}
 		return auth;
